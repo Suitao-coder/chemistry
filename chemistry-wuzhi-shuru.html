@@ -637,7 +637,7 @@
         }
         
         function saveGameResult(isSuccess) {
-            let history = JSON.parse(localStorage.getItem('chemistryGameHistory') || '[]');
+            let history = JSON.parse(localStorage.getItem('chemistryGameHistory-wuzhi-shuru') || '[]');
             
             const result = {
                 id: Date.now(),
@@ -655,12 +655,12 @@
                 history = history.slice(0, 20);
             }
             
-            localStorage.setItem('chemistryGameHistory', JSON.stringify(history));
+            localStorage.setItem('chemistryGameHistory-wuzhi-shuru', JSON.stringify(history));
             loadHistory();
         }
         
         function loadHistory() {
-            const history = JSON.parse(localStorage.getItem('chemistryGameHistory') || '[]');
+            const history = JSON.parse(localStorage.getItem('chemistryGameHistory-wuzhi-shuru') || '[]');
             historyList.innerHTML = '';
             
             if (history.length === 0) {
@@ -721,13 +721,13 @@
         
         function clearHistory() {
             if (confirm('确定要清空所有历史记录吗？')) {
-                localStorage.removeItem('chemistryGameHistory');
+                localStorage.removeItem('chemistryGameHistory-wuzhi-shuru');
                 loadHistory();
             }
         }
         
         function exportHistoryToCSV() {
-            const history = JSON.parse(localStorage.getItem('chemistryGameHistory') || '[]');
+            const history = JSON.parse(localStorage.getItem('chemistryGameHistory-wuzhi-shuru') || '[]');
             if (history.length === 0) {
                 alert('没有历史记录可导出');
                 return;
