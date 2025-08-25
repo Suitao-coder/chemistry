@@ -742,16 +742,16 @@
                 timingMode: gameState.timingMode
             };
             
-            let history = JSON.parse(localStorage.getItem('chemistryGameHistory') || '[]');
+            let history = JSON.parse(localStorage.getItem('chemistryGameHistory-yuansu-shuru') || '[]');
             history.unshift(historyItem);
-            localStorage.setItem('chemistryGameHistory', JSON.stringify(history));
+            localStorage.setItem('chemistryGameHistory-yuansu-shuru', JSON.stringify(history));
             
             loadHistory();
         }
 
         // 加载历史记录
         function loadHistory() {
-            const history = JSON.parse(localStorage.getItem('chemistryGameHistory') || '[]');
+            const history = JSON.parse(localStorage.getItem('chemistryGameHistory-yuansu-shuru') || '[]');
             historyList.innerHTML = '';
             
             if (history.length === 0) {
@@ -807,14 +807,14 @@
         // 清空历史记录
         function clearHistory() {
             if (confirm('确定要清空所有历史记录吗？此操作不可恢复。')) {
-                localStorage.removeItem('chemistryGameHistory');
+                localStorage.removeItem('chemistryGameHistory-yuansu-shuru');
                 loadHistory();
             }
         }
 
         // 导出历史记录为CSV
         function exportHistoryToCSV() {
-            const history = JSON.parse(localStorage.getItem('chemistryGameHistory') || '[]');
+            const history = JSON.parse(localStorage.getItem('chemistryGameHistory-yuansu-shuru') || '[]');
             
             if (history.length === 0) {
                 alert('没有历史记录可导出');
