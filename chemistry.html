@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>化学学习游戏合集</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',      // 化学元素主色调-蓝色
+                        secondary: '#f97316',    // 化学物质主色调-橙色
+                        accent: '#10b981',       // 强调色-绿色
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-visibility: auto;
+            .btn-hover {
+                @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1 transform;
+            }
+            .card-effect {
+                @apply bg-white rounded-xl shadow-md overflow-hidden transition-all duration-500 hover:shadow-xl;
+            }
+            .img-zoom {
+                @apply transition-transform duration-500 hover:scale-105;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-green-50 min-h-screen font-sans text-gray-800">
+    <div class="container mx-auto px-4 py-8 max-w-5xl">
+        <!-- 页面标题 -->
+        <header class="text-center mb-10">
+            <h1 class="text-3rem md:text-4rem font-bold mb-4 tracking-tight">
+                化学学习<span class="text-primary">游戏合集</span>
+            </h1>
+            <p class="text-gray-600 mb-6 max-w-2xl mx-auto text-lg">
+                选择以下化学游戏，通过互动方式提升学习效率
+            </p>
+        </header>
+        
+        <!-- 游戏选择区域 -->
+        <div class="grid md:grid-cols-2 gap-8 mb-10">
+            <!-- 元素匹配游戏卡片 -->
+            <div class="card-effect">
+                <div class="h-56 overflow-hidden">
+                    <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/de724ad40b144d46910693c40317a08a.png~tplv-a9rns2rl98-24:720:720.png?rk3s=1fb89129&x-expires=1756729745&x-signature=UJrLsIuQwQeeljMiss2HaXmEf8g%3D" 
+                         alt="化学元素周期表背景，展示元素符号与名称" 
+                         class="w-full h-full object-cover img-zoom">
+                </div>
+                <div class="p-6">
+                    <h2 class="text-xl font-bold mb-2 text-primary">元素匹配游戏</h2>
+                    <p class="text-gray-600 mb-4">
+                        匹配化学元素符号与其中文名称，帮助记忆必背元素
+                    </p>
+                    <button onclick="window.open('chemistry-yuansu.html', '_self')" 
+                            class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-lg shadow-md btn-hover focus:outline-none">
+                        <i class="fa fa-play-circle mr-2"></i> 开始游戏
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 物质匹配游戏卡片 -->
+            <div class="card-effect">
+                <div class="h-56 overflow-hidden">
+                    <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/90decb600f93427595bec348ccfcdffe.png~tplv-a9rns2rl98-24:720:720.png?rk3s=1fb89129&x-expires=1756730346&x-signature=nMIfbi3NMcwxMDLbghwG2939cw8%3D" 
+                         alt="化学实验室背景，展示各种化学物质" 
+                         class="w-full h-full object-cover img-zoom">
+                </div>
+                <div class="p-6">
+                    <h2 class="text-xl font-bold mb-2 text-secondary">物质匹配游戏</h2>
+                    <p class="text-gray-600 mb-4">
+                        匹配化学物质化学式与中文名称，巩固化学物质知识
+                    </p>
+                    <button onclick="window.open('chemistry-wuzhi.html', '_self')" 
+                            class="w-full bg-secondary hover:bg-secondary/90 text-white font-bold py-3 px-6 rounded-lg shadow-md btn-hover focus:outline-none">
+                        <i class="fa fa-play-circle mr-2"></i> 开始游戏
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 游戏介绍 -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h3 class="text-lg font-semibold mb-3 text-accent flex items-center">
+                <i class="fa fa-flask mr-2"></i> 关于化学学习游戏
+            </h3>
+            <p class="text-gray-700 mb-4">
+                这些互动游戏旨在通过匹配练习帮助学生更好地记忆化学元素和物质的名称与符号/化学式，
+                使枯燥的记忆过程变得更加有趣和高效。
+            </p>
+            <p class="text-gray-700">
+                无论是元素匹配还是物质匹配，都能让您在轻松的游戏氛围中加深对化学基础知识的理解和记忆。
+            </p>
+        </div>
+        
+        <footer class="text-center text-gray-500 py-4">
+            <p>化学学习游戏合集 | 基于九年级化学学习资料</p>
+        </footer>
+    </div>
+</body>
+</html>
