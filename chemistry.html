@@ -17,6 +17,8 @@
                         primary: '#3b82f6',      // 化学元素主色调-蓝色
                         secondary: '#f97316',    // 化学物质主色调-橙色
                         accent: '#10b981',       // 强调色-绿色
+                        tertiary: '#8b5cf6',     // 第三色-紫色
+                        quaternary: '#ec4899',   // 第四色-粉色
                     },
                     fontFamily: {
                         sans: ['Inter', 'system-ui', 'sans-serif'],
@@ -92,6 +94,44 @@
                     </button>
                 </div>
             </div>
+
+            <!-- 元素周期表游戏（沿用元素匹配游戏图片风格） -->
+            <div class="card-effect">
+                <div class="h-56 overflow-hidden">
+                    <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/de724ad40b144d46910693c40317a08a.png~tplv-a9rns2rl98-24:720:720.png?rk3s=1fb89129&x-expires=1756729745&x-signature=UJrLsIuQwQeeljMiss2HaXmEf8g%3D" 
+                         alt="元素周期表结构展示，包含各种元素信息" 
+                         class="w-full h-full object-cover img-zoom">
+                </div>
+                <div class="p-6">
+                    <h2 class="text-xl font-bold mb-2 text-quaternary">元素周期表游戏</h2>
+                    <p class="text-gray-600 mb-4">
+                        探索元素周期表结构，学习元素周期律和元素性质
+                    </p>
+                    <button onclick="window.open('chemistry-yuansu-shuru.html', '_self')" 
+                            class="w-full bg-quaternary hover:bg-quaternary/90 text-white font-bold py-3 px-6 rounded-lg shadow-md btn-hover focus:outline-none">
+                        <i class="fa fa-play-circle mr-2"></i> 开始游戏
+                    </button>
+                </div>
+            </div>
+
+            <!-- 化学反应游戏（沿用物质匹配游戏图片风格） -->
+            <div class="card-effect">
+                <div class="h-56 overflow-hidden">
+                    <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/90decb600f93427595bec348ccfcdffe.png~tplv-a9rns2rl98-24:720:720.png?rk3s=1fb89129&x-expires=1756730346&x-signature=nMIfbi3NMcwxMDLbghwG2939cw8%3D" 
+                         alt="化学反应实验场景，展示实验过程与结果" 
+                         class="w-full h-full object-cover img-zoom">
+                </div>
+                <div class="p-6">
+                    <h2 class="text-xl font-bold mb-2 text-tertiary">化学反应游戏</h2>
+                    <p class="text-gray-600 mb-4">
+                        学习和记忆化学反应方程式，测试反应产物与条件
+                    </p>
+                    <button onclick="window.open('chemistry-wuzhi-shuru.html', '_self')" 
+                            class="w-full bg-tertiary hover:bg-tertiary/90 text-white font-bold py-3 px-6 rounded-lg shadow-md btn-hover focus:outline-none">
+                        <i class="fa fa-play-circle mr-2"></i> 开始游戏
+                    </button>
+                </div>
+            </div>
         </div>
         
         <!-- 游戏介绍 -->
@@ -104,7 +144,7 @@
                 使枯燥的记忆过程变得更加有趣和高效。
             </p>
             <p class="text-gray-700">
-                无论是元素匹配还是物质匹配，都能让您在轻松的游戏氛围中加深对化学基础知识的理解和记忆。
+                无论是元素匹配、物质匹配、元素周期表探索还是化学反应学习，都能让您在轻松的游戏氛围中加深对化学基础知识的理解和记忆。
             </p>
         </div>
         
