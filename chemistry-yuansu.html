@@ -805,7 +805,7 @@
         // 保存游戏结果到本地存储
         function saveGameResult(isSuccess) {
             // 获取现有记录
-            let history = JSON.parse(localStorage.getItem('chemistryGameHistory') || '[]');
+            let history = JSON.parse(localStorage.getItem('chemistryGameHistory-yuansu') || '[]');
             
             // 创建新记录
             const result = {
@@ -828,7 +828,7 @@
             }
             
             // 保存到本地存储
-            localStorage.setItem('chemistryGameHistory', JSON.stringify(history));
+            localStorage.setItem('chemistryGameHistory-yuansu', JSON.stringify(history));
             
             // 更新历史记录显示
             loadHistory();
@@ -837,7 +837,7 @@
         // 加载历史记录
         function loadHistory() {
             // 获取现有记录
-            const history = JSON.parse(localStorage.getItem('chemistryGameHistory') || '[]');
+            const history = JSON.parse(localStorage.getItem('chemistryGameHistory-yuansu') || '[]');
             
             // 清空历史列表
             historyList.innerHTML = '';
@@ -916,13 +916,13 @@
         // 清空历史记录
         function clearHistory() {
             if (confirm('确定要清空所有游戏记录吗？此操作不可恢复。')) {
-                localStorage.removeItem('chemistryGameHistory');
+                localStorage.removeItem('chemistryGameHistory-yuansu');
                 loadHistory();
             }
         }
         // 导出历史记录为CSV
         function exportHistoryToCSV() {
-            const history = JSON.parse(localStorage.getItem('chemistryGameHistory') || '[]');
+            const history = JSON.parse(localStorage.getItem('chemistryGameHistory-yuansu') || '[]');
             
             if (history.length === 0) {
                 alert('没有历史记录可导出');
