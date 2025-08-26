@@ -42,6 +42,10 @@
                 opacity: 0.7;
                 transform: scale(1.05);
                 cursor: grabbing;
+                user-select: none;
+                -webkit-user-select: none;
+                touch-action: none; /* 新增：禁用浏览器默认触摸行为（如滚动） */
+                -webkit-touch-callout: none; /* 新增：禁用触摸时的默认菜单 */
             }
             .drag-over {
                 background-color: rgba(59, 130, 246, 0.15);
@@ -366,12 +370,16 @@
         // 触摸事件状态变量
         const touchState = {
             isDragging: false,
-            startX: 0,
-            startY: 0,
-            currentX: 0,
-            currentY: 0,
+            startTouchX: 0,    // 新增：触摸开始时的视口X坐标
+            startTouchY: 0,    // 新增：触摸开始时的视口Y坐标
+            initialLeft: 0,    // 新增：元素初始的文档左坐标
+            initialTop: 0,     // 新增：元素初始的文档上坐标
             element: null,
-            initialRect: null
+            initialRect: null,
+            initialZIndex: '',
+            targetZones: null,
+            lastMoveTime: 0,
+            moveThrottle: 16
         };
 
         // 初始化事件监听
@@ -605,7 +613,7 @@
             // 创建DOM元素
             allValences.forEach((valence, index) => {
                 const valenceItem = document.createElement('div');
-                valenceItem.className = 'valence-item bg-secondary/10 border-2 border-secondary/30 text-center font-bold rounded-lg shadow-md p-2 cursor-grab hover:shadow-lg transition-all duration-200 opacity-0 translate-y-4';
+                valenceItem.className = 'valence-item bg-secondary/10 border-2 border-secondary/30 text-center font-bold rounded-lg shadow-md p-2 cursor-grab hover:shadow-lg transition-all duration-200 opacity-0 translate-y-4 touch-manipulation';
                 valenceItem.draggable = true;
                 valenceItem.dataset.valence = valence.value;
                 valenceItem.dataset.index = index;
@@ -752,80 +760,96 @@
         // 触摸开始事件
         function handleTouchStart(e) {
             if (!gameState.isPlaying) return;
+            e.preventDefault();
             
             const touch = e.touches[0];
             touchState.element = this;
             touchState.initialRect = this.getBoundingClientRect();
             
-            // 记录初始位置
-            touchState.startX = touch.clientX - touchState.initialRect.left;
-            touchState.startY = touch.clientY - touchState.initialRect.top;
-            touchState.currentX = 0;
-            touchState.currentY = 0;
+            // 保存初始z-index以便恢复
+            touchState.initialZIndex = this.style.zIndex || '';
             
-            // 设置拖拽状态
+            // 关键修改：记录触摸点在视口中的原始位置
+            touchState.startTouchX = touch.clientX;
+            touchState.startTouchY = touch.clientY;
+            
+            // 关键修改：计算元素初始在文档中的位置（考虑滚动）
+            const scrollX = window.scrollX;
+            const scrollY = window.scrollY;
+            touchState.initialLeft = touchState.initialRect.left + scrollX;
+            touchState.initialTop = touchState.initialRect.top + scrollY;
+            
+            // 缓存目标区域
+            touchState.targetZones = document.querySelectorAll('.category-box [data-element]');
+            
+            // 设置拖拽状态和样式
             touchState.isDragging = true;
             this.classList.add('dragging');
             this.style.position = 'fixed';
             this.style.width = `${touchState.initialRect.width}px`;
-            this.style.left = `${touchState.initialRect.left}px`;
-            this.style.top = `${touchState.initialRect.top}px`;
-            this.style.zIndex = '100';
+            this.style.transform = 'translate(0, 0)';
+            this.style.willChange = 'transform';
+            this.style.zIndex = '1000';
+            this.style.transition = 'none';
+            this.style.pointerEvents = 'none';
         }
 
-        // 触摸移动事件
+        // 触摸移动事件处理（修复位置更新）
         function handleTouchMove(e) {
+            const now = Date.now();
+            if (now - touchState.lastMoveTime < touchState.moveThrottle) return;
+            touchState.lastMoveTime = now;
+            
             if (!touchState.isDragging || !gameState.isPlaying) return;
+            e.preventDefault();
             
             const touch = e.touches[0];
+            const scrollX = window.scrollX;
+            const scrollY = window.scrollY;
             
-            // 计算新位置
-            touchState.currentX = touch.clientX - touchState.startX;
-            touchState.currentY = touch.clientY - touchState.startY;
+            // 关键修改：计算元素新位置 = 初始位置 + 触摸移动距离
+            const moveX = touch.clientX - touchState.startTouchX;
+            const moveY = touch.clientY - touchState.startTouchY;
+            const currentX = touchState.initialLeft + moveX - scrollX;  // 减去滚动偏移，因为使用fixed定位
+            const currentY = touchState.initialTop + moveY - scrollY;
             
-            // 更新元素位置
-            touchState.element.style.left = `${touchState.currentX}px`;
-            touchState.element.style.top = `${touchState.currentY}px`;
+            // 更新元素位置（确保与手指位置一致）
+            touchState.element.style.transform = `translate(${currentX}px, ${currentY}px)`;  
             
-            // 检查是否在某个分类上方
-            document.querySelectorAll('.category-box').forEach(box => {
+            // 碰撞检测逻辑保持不变
+            touchState.targetZones.forEach(zone => {
+                const box = zone.closest('.category-box');
                 const boxRect = box.getBoundingClientRect();
                 const touchX = touch.clientX;
                 const touchY = touch.clientY;
                 
-                // 检查触摸点是否在分类区域内
-                if (touchX >= boxRect.left && touchX <= boxRect.right &&
-                    touchY >= boxRect.top && touchY <= boxRect.bottom) {
-                    box.classList.add('drag-over');
-                } else {
-                    box.classList.remove('drag-over');
-                }
+                const isOver = touchX >= boxRect.left && touchX <= boxRect.right &&
+                            touchY >= boxRect.top && touchY <= boxRect.bottom;
+                
+                box.classList.toggle('drag-over', isOver);
             });
         }
 
-        // 触摸结束事件
+        // 触摸结束事件处理（保持不变）
         function handleTouchEnd(e) {
-            if (!touchState.isDragging || !gameState.isPlaying) return;
+            if (!touchState.isDragging || !gameState.isPlaying || !touchState.element) return;
             
             const element = touchState.element;
             const touch = e.changedTouches[0];
             
-            // 查找触摸结束位置下方的分类
-            let targetCategory = null;
-            document.querySelectorAll('.category-box').forEach(box => {
-                const boxRect = box.getBoundingClientRect();
-                if (touch.clientX >= boxRect.left && touch.clientX <= boxRect.right &&
-                    touch.clientY >= boxRect.top && touch.clientY <= boxRect.bottom) {
-                    targetCategory = box.querySelector('div[class*="flex-1 flex flex-wrap"]');
+            let targetZone = null;
+            touchState.targetZones.forEach(zone => {
+                const box = zone.closest('.category-box');
+                if (box.classList.contains('drag-over')) {
+                    targetZone = zone;
                 }
                 box.classList.remove('drag-over');
             });
             
-            // 如果找到目标分类，处理放置
-            if (targetCategory) {
+            if (targetZone) {
                 handleDrop({
                     preventDefault: () => {},
-                    target: targetCategory,
+                    target: targetZone,
                     dataTransfer: {
                         getData: () => element.dataset.index
                     }
@@ -833,10 +857,19 @@
             }
             
             // 重置样式和状态
+            element.style.position = '';
+            element.style.width = '';
+            element.style.transform = '';
+            element.style.willChange = '';
+            element.style.zIndex = touchState.initialZIndex;
+            element.style.pointerEvents = '';
+            element.style.transition = '';
             element.classList.remove('dragging');
-            element.removeAttribute('style');
+            
+            // 重置触摸状态
             touchState.isDragging = false;
             touchState.element = null;
+            touchState.targetZones = null;
         }
 
         // 开始计时器
