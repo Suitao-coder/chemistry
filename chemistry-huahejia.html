@@ -265,44 +265,44 @@
         // 化合价数据 - 按难度分级，每个元素可能有多个化合价
         const valenceData = {
             easy: [
-                { element: 'H（氢）', valences: ['+1'], description: '氢元素通常显+1价' },
-                { element: 'O（氧）', valences: ['-2'], description: '氧元素通常显-2价' },
-                { element: 'Na（钠）', valences: ['+1'], description: '钠元素通常显+1价' },
-                { element: 'K（钾）', valences: ['+1'], description: '钾元素通常显+1价' },
-                { element: 'Ca（钙）', valences: ['+2'], description: '钙元素通常显+2价' },
-                { element: 'Mg（镁）', valences: ['+2'], description: '镁元素通常显+2价' },
-                { element: 'Al（铝）', valences: ['+3'], description: '铝元素通常显+3价' },
-                { element: 'Cl（氯）', valences: ['-1'], description: '氯元素通常显-1价' },
-                { element: 'N（氮）', valences: ['-3'], description: '氮元素通常显-3价' },
-                { element: 'S（硫）', valences: ['-2'], description: '硫元素通常显-2价' }
+                { element: 'H（氢）', valences: ['+1']},
+                { element: 'O（氧）', valences: ['-2']},
+                { element: 'Na（钠）', valences: ['+1']},
+                { element: 'K（钾）', valences: ['+1']},
+                { element: 'Ca（钙）', valences: ['+2']},
+                { element: 'Mg（镁）', valences: ['+2']},
+                { element: 'Al（铝）', valences: ['+3']},
+                { element: 'Cl（氯）', valences: ['-1']},
+                { element: 'N（氮）', valences: ['-3']},
+                { element: 'S（硫）', valences: ['-2']}
             ],
             medium: [
-                { element: 'H（氢）', valences: ['+1'], description: '氢元素通常显+1价' },
-                { element: 'O（氧）', valences: ['-2', '-1'], description: '氧元素通常显-2价，过氧化物中显-1价' },
-                { element: 'Na（钠）', valences: ['+1'], description: '钠元素通常显+1价' },
-                { element: 'Ca（钙）', valences: ['+2'], description: '钙元素通常显+2价' },
-                { element: 'Al（铝）', valences: ['+3'], description: '铝元素通常显+3价' },
-                { element: 'Fe（铁）', valences: ['+2', '+3'], description: '铁元素有+2价（亚铁）和+3价' },
-                { element: 'Cu（铜）', valences: ['+2'], description: '铜元素通常显+2价' },
-                { element: 'Zn（锌）', valences: ['+2'], description: '锌元素通常显+2价' },
-                { element: 'Cl⁻（氯离子）', valences: ['-1'], description: '氯离子显-1价' },
-                { element: 'OH⁻（氢氧根）', valences: ['-1'], description: '氢氧根离子显-1价' },
-                { element: 'NO₃⁻（硝酸根）', valences: ['-1'], description: '硝酸根离子显-1价' },
-                { element: 'SO₄²⁻（硫酸根）', valences: ['-2'], description: '硫酸根离子显-2价' },
-                { element: 'CO₃²⁻（碳酸根）', valences: ['-2'], description: '碳酸根离子显-2价' },
-                { element: 'NH₄⁺（铵根）', valences: ['+1'], description: '铵根离子显+1价' }
+                { element: 'H（氢）', valences: ['+1']},
+                { element: 'O（氧）', valences: ['-2', '-1']},
+                { element: 'Na（钠）', valences: ['+1']},
+                { element: 'Ca（钙）', valences: ['+2']},
+                { element: 'Al（铝）', valences: ['+3']},
+                { element: 'Fe（铁）', valences: ['+2', '+3']},
+                { element: 'Cu（铜）', valences: ['+2']},
+                { element: 'Zn（锌）', valences: ['+2']},
+                { element: 'Cl⁻（氯离子）', valences: ['-1']},
+                { element: 'OH⁻（氢氧根）', valences: ['-1']},
+                { element: 'NO₃⁻（硝酸根）', valences: ['-1']},
+                { element: 'SO₄²⁻（硫酸根）', valences: ['-2']},
+                { element: 'CO₃²⁻（碳酸根）', valences: ['-2']},
+                { element: 'NH₄⁺（铵根）', valences: ['+1']}
             ],
             hard: [
-                { element: 'C（碳）', valences: ['+2', '+4'], description: '碳元素有+2价和+4价' },
-                { element: 'N（氮）', valences: ['-3', '+2', '+4', '+5'], description: '氮元素有多种化合价' },
-                { element: 'P（磷）', valences: ['-3', '+3', '+5'], description: '磷元素有-3、+3和+5价' },
-                { element: 'O（氧）', valences: ['-2', '-1'], description: '氧元素通常显-2价，过氧化物中显-1价' },
-                { element: 'S（硫）', valences: ['-2', '+4', '+6'], description: '硫元素有-2、+4和+6价' },
-                { element: 'Cl（氯）', valences: ['-1', '+1', '+5', '+7'], description: '氯元素有多种化合价' },
-                { element: 'Fe（铁）', valences: ['+2', '+3'], description: '铁元素有+2价（亚铁）和+3价' },
-                { element: 'Cu（铜）', valences: ['+1', '+2'], description: '铜元素有+1价和+2价' },
-                { element: 'Mn（锰）', valences: ['+2', '+4', '+6', '+7'], description: '锰元素有多种化合价' },
-                { element: 'Cr（铬）', valences: ['+3', '+6'], description: '铬元素有+3价和+6价' }
+                { element: 'C（碳）', valences: ['+2', '+4']},
+                { element: 'N（氮）', valences: ['-3', '+2', '+4', '+5']},
+                { element: 'P（磷）', valences: ['-3', '+3', '+5']},
+                { element: 'O（氧）', valences: ['-2', '-1']},
+                { element: 'S（硫）', valences: ['-2', '+4', '+6']},
+                { element: 'Cl（氯）', valences: ['-1', '+1', '+5', '+7']},
+                { element: 'Fe（铁）', valences: ['+2', '+3']},
+                { element: 'Cu（铜）', valences: ['+1', '+2']},
+                { element: 'Mn（锰）', valences: ['+2', '+4', '+6', '+7']},
+                { element: 'Cr（铬）', valences: ['+3', '+6']}
             ]
         };
 
@@ -636,7 +636,7 @@
                 // 元素描述
                 const descDiv = document.createElement('div');
                 descDiv.className = 'text-xs text-gray-500 mb-2';
-                descDiv.textContent = element.description;
+                // descDiv.textContent = element.description;
                 
                 // 化合价放置区域
                 const dropZone = document.createElement('div');
@@ -990,7 +990,7 @@
         // 保存历史记录
         function saveHistory(isSuccess) {
             // 获取现有历史记录
-            let history = JSON.parse(localStorage.getItem('valenceGameHistory') || '[]');
+            let history = JSON.parse(localStorage.getItem('chemistry-huahejia') || '[]');
             
             // 创建新记录
             const newRecord = {
@@ -1008,7 +1008,7 @@
             
             // 添加新记录并保存
             history.unshift(newRecord);
-            localStorage.setItem('valenceGameHistory', JSON.stringify(history));
+            localStorage.setItem('chemistry-huahejia', JSON.stringify(history));
             
             // 更新历史记录显示
             loadHistory();
@@ -1017,7 +1017,7 @@
         // 加载历史记录
         function loadHistory() {
             // 获取历史记录
-            const history = JSON.parse(localStorage.getItem('valenceGameHistory') || '[]');
+            const history = JSON.parse(localStorage.getItem('chemistry-huahejia') || '[]');
             
             // 清空列表
             historyList.innerHTML = '';
@@ -1103,14 +1103,14 @@
         // 清空历史记录
         function clearHistory() {
             if (confirm('确定要清空所有历史记录吗？此操作不可恢复。')) {
-                localStorage.removeItem('valenceGameHistory');
+                localStorage.removeItem('chemistry-huahejia');
                 loadHistory();
             }
         }
 
         // 导出历史记录为CSV
         function exportHistoryToCSV() {
-            const history = JSON.parse(localStorage.getItem('valenceGameHistory') || '[]');
+            const history = JSON.parse(localStorage.getItem('chemistry-huahejia') || '[]');
             
             if (history.length === 0) {
                 alert('没有历史记录可导出');
