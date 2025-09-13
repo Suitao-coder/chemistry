@@ -38,18 +38,9 @@
                 min-height: 100px;
                 transition: all 0.3s ease;
             }
-            .dragging {
-                opacity: 0.7;
+            .selected {
                 transform: scale(1.05);
-                cursor: grabbing;
-                user-select: none;
-                -webkit-user-select: none;
-                touch-action: none; /* 新增：禁用浏览器默认触摸行为（如滚动） */
-                -webkit-touch-callout: none; /* 新增：禁用触摸时的默认菜单 */
-            }
-            .drag-over {
-                background-color: rgba(59, 130, 246, 0.15);
-                border-color: rgba(59, 130, 246, 0.5);
+                box-shadow: 0 0 0 2px #3b82f6;
             }
             .matched {
                 animation: pulse 0.5s;
@@ -77,7 +68,7 @@
                 化学<span class="text-primary">化合价</span>归类游戏
             </h1>
             <p class="text-gray-600 text-sm sm:text-base mb-4 max-w-2xl mx-auto">
-                将下方的化合价拖拽到对应的元素分类中，完成匹配挑战
+                点击下方的化合价，然后点击对应的元素分类，完成匹配挑战
             </p>
             
             <!-- 游戏设置区域 -->
@@ -313,7 +304,7 @@
         // 游戏状态
         const gameState = {
             isPlaying: false,
-            draggedItem: null,
+            selectedValence: null, // 当前选中的化合价
             matchedPairs: 0,
             totalPairs: 0, // 总共有多少个需要匹配的化合价
             attempts: 0,
@@ -366,21 +357,6 @@
         const confirmStartBtn = document.getElementById('confirmStartBtn');
         const emptyHistory = document.getElementById('emptyHistory');
         const historyList = document.getElementById('historyList');
-
-        // 触摸事件状态变量
-        const touchState = {
-            isDragging: false,
-            startTouchX: 0,    // 新增：触摸开始时的视口X坐标
-            startTouchY: 0,    // 新增：触摸开始时的视口Y坐标
-            initialLeft: 0,    // 新增：元素初始的文档左坐标
-            initialTop: 0,     // 新增：元素初始的文档上坐标
-            element: null,
-            initialRect: null,
-            initialZIndex: '',
-            targetZones: null,
-            lastMoveTime: 0,
-            moveThrottle: 16
-        };
 
         // 初始化事件监听
         function initEventListeners() {
@@ -491,6 +467,7 @@
             gameState.attempts = 0;
             gameState.correctMatches = {};
             gameState.allValences = [];
+            gameState.selectedValence = null;
             gameState.isReset = false;
             
             // 清除计时器
@@ -541,7 +518,7 @@
                 // 创建分类元素
                 const category = document.createElement('div');
                 category.id = categoryId;
-                category.className = 'category-box bg-white rounded-lg shadow-md border-2 border-primary/20 p-3 flex flex-col';
+                category.className = 'category-box bg-white rounded-lg shadow-md border-2 border-primary/20 p-3 flex flex-col cursor-pointer hover:border-primary/50 transition-all duration-200';
                 
                 // 分类标题
                 const title = document.createElement('h3');
@@ -549,19 +526,88 @@
                 title.textContent = item.element;
                 category.appendChild(title);
                 
-                // 化合价容器（用于放置拖放的化合价）
+                // 化合价容器（用于放置点击选择的化合价）
                 const valenceDropZone = document.createElement('div');
                 valenceDropZone.className = 'flex-1 flex flex-wrap gap-2 justify-center items-center p-1';
                 valenceDropZone.setAttribute('data-element', item.element);
+                valenceDropZone.setAttribute('data-category-id', categoryId);
                 
-                // 添加拖放事件
-                valenceDropZone.addEventListener('dragover', handleDragOver);
-                valenceDropZone.addEventListener('dragleave', handleDragLeave);
-                valenceDropZone.addEventListener('drop', handleDrop);
+                // 添加点击事件
+                valenceDropZone.addEventListener('click', handleCategoryClick);
                 
                 category.appendChild(valenceDropZone);
                 categoriesContainer.appendChild(category);
             });
+        }
+
+        // 处理分类区域点击
+        function handleCategoryClick() {
+            if (!gameState.isPlaying || !gameState.selectedValence) return;
+            
+            const categoryId = this.getAttribute('data-category-id');
+            const valenceItem = gameState.selectedValence;
+            
+            // 如果已经被放置过，不再处理
+            if (!valenceItem || valenceItem.parentNode !== valencesContainer) {
+                gameState.selectedValence = null;
+                return;
+            }
+            
+            // 增加尝试次数
+            gameState.attempts++;
+            attemptsDisplay.textContent = gameState.attempts;
+            
+            // 获取当前分类和化合价
+            const valenceValue = valenceItem.dataset.valence;
+            
+            // 检查是否匹配正确
+            const isCorrect = gameState.correctMatches[categoryId]?.includes(valenceValue) || false;
+            
+            // 克隆元素并添加到分类中
+            const clonedItem = valenceItem.cloneNode(true);
+            clonedItem.classList.remove('cursor-grab', 'hover:shadow-lg', 'selected');
+            clonedItem.classList.add('cursor-default');
+            
+            // 移除点击事件监听
+            clonedItem.removeEventListener('click', handleValenceClick);
+            
+            // 根据是否正确设置样式
+            if (isCorrect) {
+                clonedItem.classList.remove('bg-secondary/10', 'border-secondary/30', 'text-secondary');
+                clonedItem.classList.add('bg-green-100', 'border-green-300', 'text-green-700', 'matched');
+                
+                // 增加匹配计数
+                gameState.matchedPairs++;
+                updateMatchesDisplay();
+                
+                // 隐藏原始元素
+                valenceItem.style.display = 'none';
+                
+                // 取消选择状态
+                gameState.selectedValence = null;
+                
+                // 检查游戏是否结束
+                if (gameState.matchedPairs >= gameState.totalPairs) {
+                    endGame(true);
+                }
+            } else {
+                clonedItem.classList.remove('bg-secondary/10', 'border-secondary/30', 'text-secondary');
+                clonedItem.classList.add('bg-red-100', 'border-red-300', 'text-red-700');
+                
+                // 3秒后移除错误的放置
+                setTimeout(() => {
+                    if (clonedItem.parentNode) {
+                        clonedItem.parentNode.removeChild(clonedItem);
+                    }
+                }, 1500);
+                
+                // 取消选择状态
+                gameState.selectedValence = null;
+                valenceItem.classList.remove('selected');
+            }
+            
+            // 将克隆的元素添加到分类中
+            this.appendChild(clonedItem);
         }
 
         // 创建化合价选项
@@ -613,8 +659,7 @@
             // 创建DOM元素
             allValences.forEach((valence, index) => {
                 const valenceItem = document.createElement('div');
-                valenceItem.className = 'valence-item bg-secondary/10 border-2 border-secondary/30 text-center font-bold rounded-lg shadow-md p-2 cursor-grab hover:shadow-lg transition-all duration-200 opacity-0 translate-y-4 touch-manipulation';
-                valenceItem.draggable = true;
+                valenceItem.className = 'valence-item bg-secondary/10 border-2 border-secondary/30 text-center font-bold rounded-lg shadow-md p-2 cursor-pointer hover:shadow-lg transition-all duration-200 opacity-0 translate-y-4';
                 valenceItem.dataset.valence = valence.value;
                 valenceItem.dataset.index = index;
                 if (valence.elementId) {
@@ -627,14 +672,8 @@
                 content.textContent = valence.value;
                 valenceItem.appendChild(content);
                 
-                // 添加拖放事件
-                valenceItem.addEventListener('dragstart', handleDragStart);
-                valenceItem.addEventListener('dragend', handleDragEnd);
-                
-                // 添加触摸事件支持
-                valenceItem.addEventListener('touchstart', handleTouchStart, { passive: true });
-                valenceItem.addEventListener('touchmove', handleTouchMove, { passive: false });
-                valenceItem.addEventListener('touchend', handleTouchEnd);
+                // 添加点击事件
+                valenceItem.addEventListener('click', handleValenceClick);
                 
                 valencesContainer.appendChild(valenceItem);
                 
@@ -645,238 +684,30 @@
             });
         }
 
-        // 拖拽开始
-        function handleDragStart(e) {
+        // 处理化合价点击
+        function handleValenceClick() {
             if (!gameState.isPlaying) return;
             
-            gameState.draggedItem = this;
-            this.classList.add('dragging');
-            
-            // 延迟设置不透明度，避免拖拽图像闪烁
-            setTimeout(() => {
-                this.style.opacity = '0.4';
-            }, 0);
-            
-            // 设置拖拽数据
-            e.dataTransfer.setData('text/plain', this.dataset.index);
-        }
-
-        // 拖拽结束
-        function handleDragEnd() {
-            if (!gameState.isPlaying) return;
-            
-            this.classList.remove('dragging');
-            this.style.opacity = '';
-            
-            // 移除所有拖放区域的高亮
-            document.querySelectorAll('.category-box').forEach(box => {
-                box.classList.remove('drag-over');
-            });
-        }
-
-        // 拖拽经过
-        function handleDragOver(e) {
-            if (!gameState.isPlaying || !gameState.draggedItem) return;
-            
-            e.preventDefault();
-            this.closest('.category-box').classList.add('drag-over');
-        }
-
-        // 拖拽离开
-        function handleDragLeave() {
-            if (!gameState.isPlaying) return;
-            
-            this.closest('.category-box').classList.remove('drag-over');
-        }
-
-        // 放置
-        function handleDrop(e) {
-            if (!gameState.isPlaying || !gameState.draggedItem) return;
-            
-            e.preventDefault();
-            const categoryBox = this.closest('.category-box');
-            categoryBox.classList.remove('drag-over');
-            
-            const index = e.dataTransfer.getData('text/plain');
-            const valenceItem = document.querySelector(`.valence-item[data-index="${index}"]`);
-            
-            // 如果已经被放置过，不再处理
-            if (!valenceItem || valenceItem.parentNode !== valencesContainer) return;
-            
-            // 增加尝试次数
-            gameState.attempts++;
-            attemptsDisplay.textContent = gameState.attempts;
-            
-            // 获取当前分类和化合价
-            const categoryId = categoryBox.id;
-            const valenceValue = valenceItem.dataset.valence;
-            
-            // 检查是否匹配正确
-            const isCorrect = gameState.correctMatches[categoryId]?.includes(valenceValue) || false;
-            
-            // 克隆元素并添加到分类中
-            const clonedItem = valenceItem.cloneNode(true);
-            clonedItem.draggable = false;
-            clonedItem.classList.remove('cursor-grab', 'hover:shadow-lg');
-            clonedItem.classList.add('cursor-default');
-            
-            // 移除触摸事件监听
-            clonedItem.removeEventListener('touchstart', handleTouchStart);
-            clonedItem.removeEventListener('touchmove', handleTouchMove);
-            clonedItem.removeEventListener('touchend', handleTouchEnd);
-            
-            // 根据是否正确设置样式
-            if (isCorrect) {
-                clonedItem.classList.remove('bg-secondary/10', 'border-secondary/30', 'text-secondary');
-                clonedItem.classList.add('bg-green-100', 'border-green-300', 'text-green-700', 'matched');
-                
-                // 增加匹配计数
-                gameState.matchedPairs++;
-                updateMatchesDisplay();
-                
-                // 隐藏原始元素
-                valenceItem.style.display = 'none';
-                
-                // 检查游戏是否结束
-                if (gameState.matchedPairs >= gameState.totalPairs) {
-                    endGame(true);
-                }
-            } else {
-                clonedItem.classList.remove('bg-secondary/10', 'border-secondary/30', 'text-secondary');
-                clonedItem.classList.add('bg-red-100', 'border-red-300', 'text-red-700');
-                
-                // 3秒后移除错误的放置
-                setTimeout(() => {
-                    if (clonedItem.parentNode) {
-                        clonedItem.parentNode.removeChild(clonedItem);
-                    }
-                }, 1500);
+            // 如果点击的是已经选中的元素，则取消选择
+            if (gameState.selectedValence === this) {
+                this.classList.remove('selected');
+                gameState.selectedValence = null;
+                return;
             }
             
-            // 添加到分类中
-            this.appendChild(clonedItem);
-        }
-
-        // 触摸开始事件
-        function handleTouchStart(e) {
-            if (!gameState.isPlaying) return;
-            e.preventDefault();
-            
-            const touch = e.touches[0];
-            touchState.element = this;
-            touchState.initialRect = this.getBoundingClientRect();
-            
-            // 保存初始z-index以便恢复
-            touchState.initialZIndex = this.style.zIndex || '';
-            
-            // 关键修改：记录触摸点在视口中的原始位置
-            touchState.startTouchX = touch.clientX;
-            touchState.startTouchY = touch.clientY;
-            
-            // 关键修改：计算元素初始在文档中的位置（考虑滚动）
-            const scrollX = window.scrollX;
-            const scrollY = window.scrollY;
-            touchState.initialLeft = touchState.initialRect.left + scrollX;
-            touchState.initialTop = touchState.initialRect.top + scrollY;
-            
-            // 缓存目标区域
-            touchState.targetZones = document.querySelectorAll('.category-box [data-element]');
-            
-            // 设置拖拽状态和样式
-            touchState.isDragging = true;
-            this.classList.add('dragging');
-            this.style.position = 'fixed';
-            this.style.width = `${touchState.initialRect.width}px`;
-            this.style.transform = 'translate(0, 0)';
-            this.style.willChange = 'transform';
-            this.style.zIndex = '1000';
-            this.style.transition = 'none';
-            this.style.pointerEvents = 'none';
-        }
-
-        // 触摸移动事件处理（修复位置更新）
-        function handleTouchMove(e) {
-            const now = Date.now();
-            if (now - touchState.lastMoveTime < touchState.moveThrottle) return;
-            touchState.lastMoveTime = now;
-            
-            if (!touchState.isDragging || !gameState.isPlaying) return;
-            e.preventDefault();
-            
-            const touch = e.touches[0];
-            const scrollX = window.scrollX;
-            const scrollY = window.scrollY;
-            
-            // 关键修改：计算元素新位置 = 初始位置 + 触摸移动距离
-            const moveX = touch.clientX - touchState.startTouchX;
-            const moveY = touch.clientY - touchState.startTouchY;
-            const currentX = touchState.initialLeft + moveX - scrollX;  // 减去滚动偏移，因为使用fixed定位
-            const currentY = touchState.initialTop + moveY - scrollY;
-            
-            // 更新元素位置（确保与手指位置一致）
-            touchState.element.style.transform = `translate(${currentX}px, ${currentY}px)`;  
-            
-            // 碰撞检测逻辑保持不变
-            touchState.targetZones.forEach(zone => {
-                const box = zone.closest('.category-box');
-                const boxRect = box.getBoundingClientRect();
-                const touchX = touch.clientX;
-                const touchY = touch.clientY;
-                
-                const isOver = touchX >= boxRect.left && touchX <= boxRect.right &&
-                            touchY >= boxRect.top && touchY <= boxRect.bottom;
-                
-                box.classList.toggle('drag-over', isOver);
-            });
-        }
-
-        // 触摸结束事件处理（保持不变）
-        function handleTouchEnd(e) {
-            if (!touchState.isDragging || !gameState.isPlaying || !touchState.element) return;
-            
-            const element = touchState.element;
-            const touch = e.changedTouches[0];
-            
-            let targetZone = null;
-            touchState.targetZones.forEach(zone => {
-                const box = zone.closest('.category-box');
-                if (box.classList.contains('drag-over')) {
-                    targetZone = zone;
-                }
-                box.classList.remove('drag-over');
-            });
-            
-            if (targetZone) {
-                handleDrop({
-                    preventDefault: () => {},
-                    target: targetZone,
-                    dataTransfer: {
-                        getData: () => element.dataset.index
-                    }
-                });
+            // 取消之前选中元素的选中状态
+            if (gameState.selectedValence) {
+                gameState.selectedValence.classList.remove('selected');
             }
             
-            // 重置样式和状态
-            element.style.position = '';
-            element.style.width = '';
-            element.style.transform = '';
-            element.style.willChange = '';
-            element.style.zIndex = touchState.initialZIndex;
-            element.style.pointerEvents = '';
-            element.style.transition = '';
-            element.classList.remove('dragging');
-            
-            // 重置触摸状态
-            touchState.isDragging = false;
-            touchState.element = null;
-            touchState.targetZones = null;
+            // 设置当前选中状态
+            this.classList.add('selected');
+            gameState.selectedValence = this;
         }
 
         // 开始计时器
         function startTimer() {
-            if (gameState.timer) {
-                clearInterval(gameState.timer);
-            }
+            if (gameState.timer) clearInterval(gameState.timer);
             
             gameState.timer = setInterval(() => {
                 if (!gameState.isPlaying) {
@@ -885,10 +716,9 @@
                 }
                 
                 if (gameState.timingMode === 'countdown') {
-                    // 倒计时模式
                     gameState.countdownSeconds--;
                     
-                    // 时间不足10秒时添加警告效果
+                    // 倒计时不足10秒时添加警告效果
                     if (gameState.countdownSeconds <= 10) {
                         timerDisplay.classList.add('timer-warning');
                     }
@@ -902,7 +732,6 @@
                     
                     timerDisplay.textContent = formatTime(gameState.countdownSeconds);
                 } else {
-                    // 计时模式
                     gameState.seconds++;
                     timerDisplay.textContent = formatTime(gameState.seconds);
                 }
@@ -924,60 +753,35 @@
         // 结束游戏
         function endGame(isSuccess) {
             gameState.isPlaying = false;
+            clearInterval(gameState.timer);
             
-            // 停止计时器
-            if (gameState.timer) {
-                clearInterval(gameState.timer);
-                gameState.timer = null;
-            }
-            
-            // 计算游戏用时（毫秒）
-            const gameEndTime = new Date().getTime();
-            const gameDurationMs = gameEndTime - gameState.gameStartTime;
-            
-            // 准备结果数据
-            const resultData = {
-                date: new Date().toISOString(),
-                durationMs: gameDurationMs,
-                attempts: gameState.attempts,
-                elementCount: gameState.currentElements.length,
-                difficulty: gameState.difficulty,
-                isSuccess: isSuccess,
-                timingMode: gameState.timingMode,
-                finalTimeSeconds: gameState.timingMode === 'countdown' ? gameState.countdownSeconds : gameState.seconds
-            };
-            
-            // 保存结果到本地存储
-            saveGameResult(resultData);
-            
-            // 更新弹窗内容
+            // 更新游戏结果UI
             if (isSuccess) {
                 gameOverTitle.textContent = '恭喜你！';
-                completionText.textContent = '你已完成所有化合价的匹配';
                 gameOverIcon.innerHTML = '<i class="fa fa-trophy text-2xl text-yellow-500"></i>';
                 gameOverIcon.className = 'inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 mb-3';
+                completionText.textContent = '你已完成所有化合价的匹配';
             } else {
                 gameOverTitle.textContent = '时间到！';
-                completionText.textContent = `你完成了 ${gameState.matchedPairs}/${gameState.totalPairs} 个匹配`;
                 gameOverIcon.innerHTML = '<i class="fa fa-clock-o text-2xl text-red-500"></i>';
                 gameOverIcon.className = 'inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mb-3';
+                completionText.textContent = '很遗憾，未能在规定时间内完成所有匹配';
             }
             
-            // 更新最终时间显示
+            // 设置最终统计数据
             if (gameState.timingMode === 'countdown') {
+                finalTime.textContent = formatTime(gameState.countdownSeconds);
                 finalTimeContainer.querySelector('span:first-child').textContent = '剩余时间:';
-                finalTime.textContent = formatTime(resultData.finalTimeSeconds);
-            } else if (gameState.timingMode === 'timed') {
-                finalTimeContainer.querySelector('span:first-child').textContent = '用时:';
-                finalTime.textContent = formatTime(resultData.finalTimeSeconds);
             } else {
+                finalTime.textContent = formatTime(gameState.seconds);
                 finalTimeContainer.querySelector('span:first-child').textContent = '用时:';
-                finalTime.textContent = formatTime(Math.floor(gameDurationMs / 1000));
             }
             
-            // 更新其他结果信息
-            finalAttempts.textContent = resultData.attempts;
-            finalElementCount.textContent = resultData.elementCount;
+            finalAttempts.textContent = gameState.attempts;
+            finalElementCount.textContent = gameState.currentElements.length;
+            
+            // 保存历史记录
+            saveHistory(isSuccess);
             
             // 显示游戏结束弹窗
             showGameOverModal();
@@ -997,7 +801,6 @@
         function hideGameOverModal() {
             modalContent.classList.remove('scale-100', 'opacity-100');
             modalContent.classList.add('scale-95', 'opacity-0');
-            // 完全隐藏弹窗
             setTimeout(() => {
                 gameOverModal.classList.add('hidden');
             }, 300);
@@ -1006,7 +809,6 @@
         // 显示再玩一次确认弹窗
         function showPlayAgainConfirm() {
             playAgainConfirmModal.classList.remove('hidden');
-            // 触发动画
             setTimeout(() => {
                 playAgainModalContent.classList.remove('scale-95', 'opacity-0');
                 playAgainModalContent.classList.add('scale-100', 'opacity-100');
@@ -1017,7 +819,6 @@
         function hidePlayAgainConfirm() {
             playAgainModalContent.classList.remove('scale-100', 'opacity-100');
             playAgainModalContent.classList.add('scale-95', 'opacity-0');
-            // 完全隐藏弹窗
             setTimeout(() => {
                 playAgainConfirmModal.classList.add('hidden');
             }, 300);
@@ -1027,7 +828,6 @@
         function showHistory() {
             loadHistory();
             historyModal.classList.remove('hidden');
-            // 触发动画
             setTimeout(() => {
                 historyModalContent.classList.remove('scale-95', 'opacity-0');
                 historyModalContent.classList.add('scale-100', 'opacity-100');
@@ -1038,20 +838,32 @@
         function hideHistory() {
             historyModalContent.classList.remove('scale-100', 'opacity-100');
             historyModalContent.classList.add('scale-95', 'opacity-0');
-            // 完全隐藏弹窗
             setTimeout(() => {
                 historyModal.classList.add('hidden');
             }, 300);
         }
 
-        // 保存游戏结果
-        function saveGameResult(result) {
+        // 保存历史记录
+        function saveHistory(isSuccess) {
             let history = JSON.parse(localStorage.getItem('valenceGameHistory') || '[]');
+            
+            const result = {
+                id: Date.now(),
+                date: new Date().toLocaleString(),
+                success: isSuccess,
+                elements: gameState.currentElements.length,
+                difficulty: gameState.difficulty,
+                attempts: gameState.attempts,
+                time: gameState.timingMode === 'countdown' ? 
+                      gameState.originalCountdown - gameState.countdownSeconds : 
+                      gameState.seconds
+            };
+            
             history.unshift(result); // 添加到开头
             
-            // 限制历史记录数量（最多50条）
-            if (history.length > 50) {
-                history = history.slice(0, 50);
+            // 限制历史记录数量
+            if (history.length > 20) {
+                history = history.slice(0, 20);
             }
             
             localStorage.setItem('valenceGameHistory', JSON.stringify(history));
@@ -1063,49 +875,48 @@
             historyList.innerHTML = '';
             
             if (history.length === 0) {
-                historyList.appendChild(emptyHistory);
+                historyList.innerHTML = '<div class="text-center text-gray-500 py-6 text-sm">暂无历史记录</div>';
                 return;
             }
             
-            // 隐藏空历史提示
-            emptyHistory.remove();
-            
-            // 添加历史记录项
-            history.forEach((item, index) => {
+            history.forEach(item => {
                 const historyItem = document.createElement('div');
-                historyItem.className = `bg-gray-50 rounded-lg p-3 border-l-4 ${item.isSuccess ? 'border-green-500' : 'border-red-500'}`;
+                historyItem.className = `bg-gray-50 rounded-lg p-3 border-l-4 ${item.success ? 'border-green-500' : 'border-red-500'}`;
                 
-                // 格式化日期
-                const date = new Date(item.date);
-                const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+                const date = document.createElement('div');
+                date.className = 'text-xs text-gray-500 mb-1';
+                date.textContent = item.date;
                 
-                // 格式化时间
-                let timeText = '';
-                if (item.timingMode === 'countdown') {
-                    timeText = `剩余时间: ${formatTime(item.finalTimeSeconds)}`;
-                } else {
-                    timeText = `用时: ${formatTime(item.finalTimeSeconds)}`;
-                }
+                const details = document.createElement('div');
+                details.className = 'grid grid-cols-2 gap-2 text-sm';
                 
-                // 设置难度文本
-                const difficultyText = item.difficulty === 'easy' ? '简单' : 
-                                      item.difficulty === 'medium' ? '中等' : '困难';
+                const elements = document.createElement('div');
+                elements.innerHTML = `<span class="text-gray-600">元素数量:</span> <span class="font-medium">${item.elements}</span>`;
                 
-                // 设置内容
-                historyItem.innerHTML = `
-                    <div class="flex justify-between items-start mb-1">
-                        <span class="font-medium ${item.isSuccess ? 'text-green-700' : 'text-red-700'}">
-                            ${item.isSuccess ? '成功完成' : '未完成'}
-                        </span>
-                        <span class="text-xs text-gray-500">${formattedDate}</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-600">
-                        <div>元素数量: ${item.elementCount}种</div>
-                        <div>难度: ${difficultyText}</div>
-                        <div>${timeText}</div>
-                        <div>尝试次数: ${item.attempts}</div>
-                    </div>
-                `;
+                const difficulty = document.createElement('div');
+                let difficultyText = '简单';
+                if (item.difficulty === 'medium') difficultyText = '中等';
+                if (item.difficulty === 'hard') difficultyText = '困难';
+                difficulty.innerHTML = `<span class="text-gray-600">难度:</span> <span class="font-medium">${difficultyText}</span>`;
+                
+                const attempts = document.createElement('div');
+                attempts.innerHTML = `<span class="text-gray-600">尝试次数:</span> <span class="font-medium">${item.attempts}</span>`;
+                
+                const time = document.createElement('div');
+                time.innerHTML = `<span class="text-gray-600">用时:</span> <span class="font-medium">${formatTime(item.time)}</span>`;
+                
+                const result = document.createElement('div');
+                result.className = `mt-2 text-sm font-medium ${item.success ? 'text-green-600' : 'text-red-600'}`;
+                result.textContent = item.success ? '完成挑战' : '未完成挑战';
+                
+                details.appendChild(elements);
+                details.appendChild(difficulty);
+                details.appendChild(attempts);
+                details.appendChild(time);
+                
+                historyItem.appendChild(date);
+                historyItem.appendChild(details);
+                historyItem.appendChild(result);
                 
                 historyList.appendChild(historyItem);
             });
@@ -1123,46 +934,33 @@
         function exportHistory() {
             const history = JSON.parse(localStorage.getItem('valenceGameHistory') || '[]');
             if (history.length === 0) {
-                alert('没有历史记录可导出');
+                alert('没有可导出的历史记录');
                 return;
             }
             
             // 转换为CSV格式
-            let csvContent = "日期,状态,元素数量,难度,时间,尝试次数\n";
+            let csv = '日期,结果,元素数量,难度,尝试次数,用时(秒)\n';
             
             history.forEach(item => {
-                const date = new Date(item.date);
-                const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+                const result = item.success ? '成功' : '失败';
+                let difficultyText = '简单';
+                if (item.difficulty === 'medium') difficultyText = '中等';
+                if (item.difficulty === 'hard') difficultyText = '困难';
                 
-                let timeText = '';
-                if (item.timingMode === 'countdown') {
-                    timeText = `剩余${formatTime(item.finalTimeSeconds)}`;
-                } else {
-                    timeText = formatTime(item.finalTimeSeconds);
-                }
-                
-                const difficultyText = item.difficulty === 'easy' ? '简单' : 
-                                      item.difficulty === 'medium' ? '中等' : '困难';
-                
-                csvContent += `"${formattedDate}",`;
-                csvContent += `"${item.isSuccess ? '成功' : '失败'}",`;
-                csvContent += `${item.elementCount},`;
-                csvContent += `"${difficultyText}",`;
-                csvContent += `"${timeText}",`;
-                csvContent += `${item.attempts}\n`;
+                csv += `"${item.date}",${result},${item.elements},${difficultyText},${item.attempts},${item.time}\n`;
             });
             
             // 创建下载链接
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.setAttribute('href', url);
-            link.setAttribute('download', `化合价游戏历史记录_${new Date().toLocaleDateString()}.csv`);
-            link.style.visibility = 'hidden';
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `化合价游戏历史_${new Date().toLocaleDateString()}.csv`);
+            a.style.visibility = 'hidden';
             
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         }
 
         // 初始化游戏
@@ -1170,8 +968,8 @@
             initEventListeners();
         }
 
-        // 页面加载完成后初始化
-        document.addEventListener('DOMContentLoaded', init);
+        // 启动游戏
+        window.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
